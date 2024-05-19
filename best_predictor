@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Check the input argument
+#Check the input argument and file
 if [[ $# -ne 1 ]]
 then
     echo "Usage: $0 <filename>" >&2
@@ -13,8 +13,9 @@ then
 fi
 
 file=$1
-#bash execute script to calculate Pearson Correlation Coeff
-output=$(bash pearson_r/pearson.sh "$file")
+
+#bash execute pearson.sh script to calculate Pearson Correlation Coeff
+output=$(bash ./pearson.sh "$file")
 
 #designate output values to each variables (4 in total)
 IFS=' ' read -r r1 r2 r3 r4 <<< "$output"
@@ -25,9 +26,10 @@ r2a=$(echo "${r2#-}")
 r3a=$(echo "${r3#-}")
 r4a=$(echo "${r4#-}")
 
+#Initialise the max value
 maxname="GDP"
-maxr=$r1 #max r
-maxra=$r1a #max r abs
+maxr=$r1 #maximum of r
+maxra=$r1a #maximum of abs r
 
 if (( $(echo "$r2a > $maxr" | bc -l) ))
 then
@@ -52,7 +54,5 @@ echo "Mean correlation of GDP with Cantril ladder is $r1"
 echo "Mean correlation of Population with Cantril ladder is $r2"
 echo "Mean correlation of Life Expectancy with Cantril ladder is $r4"
 echo "Most predictive mean correlation with the Cantril ladder is $maxname (r = $maxr)"
-
-
 
 
