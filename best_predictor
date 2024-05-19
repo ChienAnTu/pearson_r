@@ -19,6 +19,13 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 #Bash execute pearson.sh script to calculate Pearson Correlation Coeff
 output=$(bash "$scriptDir/pearson.sh" "$file")
+#Check if the bash execution command was successful
+status=$?
+if [[ $status -ne 0 ]]; then
+    echo "Error: Failed to execute pearson.sh" >&2
+    echo "$output" >&2
+    exit $status #If any error I want to know it
+fi
 
 #Designate output values to each variables (4 in total)
 IFS=' ' read -r r1 r2 r3 r4 <<< "$output"
