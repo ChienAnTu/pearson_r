@@ -14,10 +14,13 @@ fi
 
 file=$1
 
-#bash execute pearson.sh script to calculate Pearson Correlation Coeff
-output=$(bash ./pearson.sh "$file")
+#Determine the script's directory
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-#designate output values to each variables (4 in total)
+#Bash execute pearson.sh script to calculate Pearson Correlation Coeff
+output=$(bash "$scriptDir/pearson.sh" "$file")
+
+#Designate output values to each variables (4 in total)
 IFS=' ' read -r r1 r2 r3 r4 <<< "$output"
 
 #Convert r to abs value & compare the abs value among r1 to r4
@@ -49,6 +52,7 @@ then
     maxr=$r4
 fi
 
+#Output of the script
 echo "Mean correlation of Homicide Rate with Cantril ladder is $r3"
 echo "Mean correlation of GDP with Cantril ladder is $r1"
 echo "Mean correlation of Population with Cantril ladder is $r2"
