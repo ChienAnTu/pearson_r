@@ -3,7 +3,7 @@
 # Then calculates the Pearson Correlation Coefficient for GDP vs Cantril, Population vs Cantril, Homicide Rate vs Cantril, Life Expectancy vs Cantril
 # Returns 4 r coefficients at the end of the program
 
-# Read & set variable for the input file argument
+# Set a variable for the input file
 file=$1
 
 # Calculator for Pearson Correlation Coefficients r1 to r4
