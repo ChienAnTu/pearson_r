@@ -1,4 +1,7 @@
 #!/bin/bash
+#This script does the data cleaning for 3 input file: GDP, Homicide rate, Life Expectancy
+#Ignores or removes the rows for not sufficient data of GDP, Homicide rate, Life Expectancy, Population, Country code
+#Includes years from 2011 to 2021 only
 
 #============Function Part==================
 #Define a function to check the format of files
@@ -15,7 +18,7 @@ formatCheck(){
     NR == 1 { headerCells = NF } #Count the cell number of header line
     NR > 1 { #Count the cell number from the second line and compare to header line
         if (NF != headerCells) {
-            print "Error: In file "FILENAME", the number of cells in line "NR" ("NF" cells) does NOT match the number of cells in the header line ("headerCells" cells)"
+            print "Error: In file "FILENAME", the number of cells in line "NR" ("NF" cells) does NOT match the number of cells in the header line ("headerCells" cells)" > "/dev/stderr"
         }
     }' "$file"
 }
