@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#Check the input argument
+if [[ $# -ne 1 ]]
+then
+    echo "Usage: $0 <filename>" >&2
+    exit 1
+
+elif [[ ! -s "$1" ]]
+then
+    echo "Error: File not found or has zero length." >&2
+    exit 1
+fi
+
+file=$1
+#bash execute script to calculate Pearson Correlation Coeff
+output=$(bash pearson_r/pearson.sh "$file")
+
+#designate output values to each variables (4 in total)
+IFS=' ' read -r r1 r2 r3 r4 <<< "$output"
+
+#Convert r to abs value & compare the abs value among r1 to r4
+r1a=$(echo "${r1#-}") # use ${var#-} to convert var to abs value
+r2a=$(echo "${r2#-}")
+r3a=$(echo "${r3#-}")
+r4a=$(echo "${r4#-}")
+
+maxname="GDP"
+maxr=$r1 #max r
+maxra=$r1a #max r abs
+
+if (( $(echo "$r2a > $maxr" | bc -l) ))
+then
+    maxname="Population"
+    maxra=$r2a
+    maxr=$r2
+
+elif (( $(echo "$r3a > $maxr" | bc -l) ))
+then
+    maxname="Homicide Rate"
+    maxra=$r3a
+    maxr=$r3
+elif (( $(echo "$r4a > $maxr" | bc -l) ))
+then
+    maxname="Life Expectancy"
+    maxra=$r4a
+    maxr=$r4
+fi
+
+echo "Mean correlation of Homicide Rate with Cantril ladder is $r3"
+echo "Mean correlation of GDP with Cantril ladder is $r1"
+echo "Mean correlation of Population with Cantril ladder is $r2"
+echo "Mean correlation of Life Expectancy with Cantril ladder is $r4"
+echo "Most predictive mean correlation with the Cantril ladder is $maxname (r = $maxr)"
+
+
+
+

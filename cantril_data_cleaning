@@ -1,0 +1,94 @@
+#!/bin/bash
+
+#============Function Part==================
+#Define a function to check the format of files
+formatCheck(){
+    #Check if the header line is tab-separated
+    if ! head -n 1 "$file" | grep -q $'\t'
+    then
+        echo "Error: $file is NOT Tab-separated format" >&2
+        exit 1
+    fi
+    
+    #Check if the number of cells of each row comply with that of header line
+    awk -F"\t" 'BEGIN { headerCells = 0 }
+    NR == 1 { headerCells = NF } #Count the cell number of header line
+    NR > 1 { #Count the cell number from the second line and compare to header line
+        if (NF != headerCells) {
+            print "Error: In file "FILENAME", the number of cells in line "NR" ("NF" cells) does NOT match the number of cells in the header line ("headerCells" cells)"
+        }
+    }' "$file"
+}
+
+#==========Input Checking Part==================
+#Check the number of input files = 3
+if [ "$#" -ne 3 ]
+then
+    echo "Usage: $0 <tsvFile1> <tsvFile2> <tsvFile3>" >&2
+    exit 1
+fi
+
+#Check if the files exist and check the format
+for file in "$@"
+do
+    if [ ! -s "$file" ]
+    then
+        echo "Error: $file not exist or has zero length" >&2
+        exit 1
+    fi
+    formatCheck "$file" #Use a defined function to check the format for each file
+done
+
+
+#==========Main Part of the Script=================
+#Create a tsv file to store cleaned data
+output="cleaned.tsv"
+
+#Set up the headers for the new file
+headers="Entity/Country\tCode\tYear\tGDP per capita\tPopulation\tHomicide Rate\tLife Expectancy\tCantril Ladder score"
+
+#Write headers into cleaned.tsv
+echo -e "$headers" > "$output"
+
+#Set up some initialised variables, GDP for GDP, HOM for Homicide rate, LIF for Life expectancy
+tempGDP=""
+tempHOM=""
+tempLIF=""
+
+#Read each file and allocate to the relevant variables
+for file in "$@"
+do
+    fheader=$(head -1 "$file" | awk '{print tolower($0)}') #Read the header line first
+	#For GDP file we: Ignore empty Code/GDP/Population, Extract year 2011~2021, Remove Continent column, sort by Code & year
+    if [[ "$fheader" == *"gdp"* ]]
+    then 
+        tempGDP=$(awk -F'\t' 'NR > 1 && $2!="" && $5!="" && $6!="" && $3 >= 2011 && $3 <= 2021 {for (i=1; i<NF; i++) printf "%s\t", $i; printf "\n"}' "$file" | sort -t $'\t' -k2,2 -k3,3 | awk -F'\t' '{print $2$3 "\t" $0}')
+    
+	#For Homicide rate file we: Ignore empty Code/Homicide, extract year 2011~2021, sort by Code & year
+    elif [[ "$fheader" == *"homicide"* ]]
+    then 
+        tempHOM=$(awk -F'\t' 'NR > 1 && $2!="" && $4!="" && $3 >= 2011 && $3 <= 2021 {print $0}' "$file" | sort -t $'\t' -k2,2 -k3,3 | awk -F'\t' '{print $2$3 "\t" $0}')
+    
+	#For Life expectancy file we: Ignore empty Code/Life exp/Population, extract year 2011~2021, Remove Continent column, sort by Code & year
+    elif [[ "$fheader" == *"life"* ]]
+    then 
+        tempLIF=$(awk -F'\t' 'NR > 1 && $2!="" && $4!="" && $6!="" && $3 >= 2011 && $3 <= 2021 {for (i=1; i<NF; i++) printf "%s\t", $i; printf "\n"}' "$file" | sort -t $'\t' -k2,2 -k3,3 | awk -F'\t' '{print $2$3 "\t" $0}')
+    
+	#Print Error message to stderr if any of the input file does not has correct header information
+    else
+        echo "Error: No useful header information, please check your input file $file" >&2
+        exit 1
+    fi
+done
+
+#Check if there are ZERO information of those file
+if [[ -z "$tempGDP" || -z "$tempHOM" || -z "$tempLIF" ]]
+then
+    echo "Error: There are some missing files or data" >&2
+    exit 1
+fi
+
+#Finally combine those cleaned information into an output file at certain order
+join -t $'\t' -1 1 -2 1 -o '0,1.2,1.3,1.4,1.6,1.7,2.5' <(echo "$tempGDP") <(echo "$tempHOM") | join -t $'\t' -1 1 -2 1 -o '1.2,1.3,1.4,1.5,1.6,1.7,2.5,2.6' - <(echo "$tempLIF") >> "$output"
+echo "Here is the cleaned data: "$output""
+
